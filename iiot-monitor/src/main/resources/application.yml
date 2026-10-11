@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  # 允许同名 Bean 覆盖（我们手写的配置会覆盖自动配置）
+  main:
+    allow-bean-definition-overriding: true
+
+  application:
+    name: iiot-monitor
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/iiot_monitor?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis123
+
+  ai:
+    # 使用阿里云 DashScope 在线接口
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}   # 或者直接把 Key 写在这里
+
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
