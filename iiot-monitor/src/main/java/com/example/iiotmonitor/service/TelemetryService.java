@@ -1,5 +1,6 @@
 package com.example.iiotmonitor.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.iiotmonitor.entity.AlarmRecord;
 import com.example.iiotmonitor.entity.AlarmRule;
 import com.example.iiotmonitor.entity.Device;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class TelemetryService {
@@ -68,10 +71,10 @@ public class TelemetryService {
             telemetry.setReportTime(LocalDateTime.now());
             telemetryMapper.insert(telemetry);
 
-            // 数据入库后，检查报警规则
+            // 5. 数据入库后，检查报警规则
             checkAlarmRules(device, json);
 
-            // 通过 WebSocket 实时推送给前端大屏
+            // 6. 通过 WebSocket 实时推送给前端大屏
             java.util.Map<String, Object> pushData = new java.util.HashMap<>();
             pushData.put("deviceId", device.getId());
             pushData.put("deviceName", device.getDeviceName());
@@ -90,8 +93,8 @@ public class TelemetryService {
 
     private void checkAlarmRules(Device device, com.fasterxml.jackson.databind.JsonNode json) {
         // 1. 查询该设备所有启用中的报警规则
-        java.util.List<AlarmRule> rules = alarmRuleMapper.selectList(
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlarmRule>()
+                List<AlarmRule> rules = alarmRuleMapper.selectList(
+                        new QueryWrapper<AlarmRule>()
                         .eq("device_id", device.getId())
                         .eq("enabled", 1)
         );
@@ -111,15 +114,36 @@ public class TelemetryService {
                 triggered = true;
             }
 
+            /*可扩展
+            switch (rule.getOperator()) {
+                case ">":  triggered = value >  threshold; break;
+                case "<":  triggered = value <  threshold; break;
+                case ">=": triggered = value >= threshold; break;
+                case "<=": triggered = value <= threshold; break;
+            }*/
+
             if (triggered) {
                 // 4. 核心亮点：Redis 滑动窗口去重
                 // 构造唯一 Key，比如：alarm:dedup:1:1
                 String dedupKey = "alarm:dedup:" + device.getId() + ":" + rule.getId();
                 // setIfAbsent 相当于 Redis 的 SETNX，如果 key 不存在才设置，并设置 60 秒过期
                 Boolean absent = redisTemplate.opsForValue().setIfAbsent(
-                        dedupKey, "1", 60, java.util.concurrent.TimeUnit.SECONDS
+                        dedupKey, "1", 60, TimeUnit.SECONDS
                 );
 
+                /*改进版滑动窗口（真正的滑动）：
+                // 每次触发都刷新过期时间
+                Boolean absent = redisTemplate.opsForValue().setIfAbsent(dedupKey, "1");
+                if (Boolean.TRUE.equals(absent)) {
+                    // 首次，设过期
+                    redisTemplate.expire(dedupKey, 60, TimeUnit.SECONDS);
+                } else {
+                    // 已存在，刷新过期时间（延长窗口）
+                    redisTemplate.expire(dedupKey, 60, TimeUnit.SECONDS);
+                }
+                但这会导致"持续超标时永远不报警第二次"*/
+
+                // 5. 插入报警记录
                 // 如果 absent 为 true，说明 60 秒内第一次触发，可以入库
                 if (Boolean.TRUE.equals(absent)) {
                     AlarmRecord record = new AlarmRecord();
@@ -134,7 +158,7 @@ public class TelemetryService {
 
                     System.out.println("🚨 触发报警: " + device.getDeviceName() + " 的 " + rule.getMetric() + " 值为 " + value + "，已去重入库！");
 
-                    // ★★★ 新增：异步调用 AI 生成处置建议 ★★★
+                    // 6. ★★★ 新增：异步调用 AI 生成处置建议 ★★★
                     alarmAiService.generateAiSuggestion(
                             record.getId(),
                             device.getDeviceName(),

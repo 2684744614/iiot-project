@@ -103,7 +103,7 @@
 		</dependency>
 	</dependencies>
 
-	<!-- ★★★★★ 极其关键：不能注释！这是给上面 Spring AI 依赖指定版本的 ★★★★★ -->
+	<!-- 极其关键：不能注释！这是给上面 Spring AI 依赖指定版本的  -->
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

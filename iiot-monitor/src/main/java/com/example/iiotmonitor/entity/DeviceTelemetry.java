@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
 public class DeviceTelemetry {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private Long deviceId;
-    private BigDecimal temperature;
-    private BigDecimal vibration;
-    private BigDecimal current;
-    private Integer speed;
-    private LocalDateTime reportTime;
+    private Long deviceId;        // 外键，关联 device 表
+    private BigDecimal temperature;  // 温度
+    private BigDecimal vibration;    // 振动
+    private BigDecimal current;      // 电流
+    private Integer speed;           // 转速
+    private LocalDateTime reportTime;  // 上报时间
 }

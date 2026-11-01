@@ -14,7 +14,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry config) {
         // 开启一个简单的内存消息代理，客户端订阅 /topic 开头的地址
         config.enableSimpleBroker("/topic");
-        // 客户端发送消息给服务器的前缀（本毕设暂时不用，但加上无妨）
+        // 客户端发送消息给服务器的前缀（暂时不用，但加上无妨）
         config.setApplicationDestinationPrefixes("/app");
     }
 

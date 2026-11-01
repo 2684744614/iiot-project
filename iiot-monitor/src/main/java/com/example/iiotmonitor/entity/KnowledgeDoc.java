@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 public class KnowledgeDoc {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String fileName;
-    private String fileType;
-    private LocalDateTime uploadTime;
-    private Integer chunkCount;
-    private Integer status;
+    private String fileName;      // 文件名
+    private String fileType;      // 文件类型（MIME，如 text/plain）
+    private LocalDateTime uploadTime;  // 上传时间
+    private Integer chunkCount;   // 切片数
+    private Integer status;       // 状态：1=已向量化 0=处理中
 }
